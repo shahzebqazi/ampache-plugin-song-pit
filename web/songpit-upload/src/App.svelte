@@ -1,6 +1,7 @@
 <script lang="ts">
   import { parseBlob } from 'music-metadata';
   import { onMount } from 'svelte';
+  import CrtBackground from './CrtBackground.svelte';
   import { apiUrl } from './lib/api';
 
   type Session = {
@@ -208,11 +209,7 @@
 </script>
 
 <div class="pa2-shell">
-  <div
-    class="pa2-matrix-bg"
-    aria-hidden="true"
-    style={`background-image: url('${assetBase}pa2/pa2-logo-matrix.jpg')`}
-  ></div>
+  <CrtBackground imageUrl={`${assetBase}pa2/pa2-logo-matrix.jpg`} />
 
   <div class="pa2-shell-inner">
     {#if staticDemo}

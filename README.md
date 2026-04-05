@@ -2,7 +2,7 @@
 
 Song Pit is a magic-link upload path for music libraries. Someone with a maintainer-issued link opens a time-limited URL, reviews tags and buckets in the browser, and uploads audio only into a staging directory you align with your Ampache upload catalog (or a sync target). The Ampache plugin adds a home-page shortcut for admins and, after song/album/artist searches, a footer link to Song Pit when there are no hits or on the last page of results (optional).
 
-The upload SPA uses **[PowerAmpache2Theme](https://github.com/icefields/PowerAmpache2Theme)** color tokens (light/dark) and **Nunito** (same family as the Android theme’s typography stack). Branding artwork (`pa2-logo-matrix.jpg`, `pa2-logo-blackbg.png`) comes from **[Power Ampache 2](https://github.com/icefields/Power-Ampache-2)**; both projects are GPL-3.0 — see [`web/songpit-upload/public/pa2/CREDITS.txt`](web/songpit-upload/public/pa2/CREDITS.txt).
+The upload SPA uses **[PowerAmpache2Theme](https://github.com/icefields/PowerAmpache2Theme)** color tokens (light/dark) and **Nunito** (same family as the Android theme’s typography stack). Branding artwork (`pa2-logo-matrix.jpg`, `pa2-logo-blackbg.png`) comes from **[Power Ampache 2](https://github.com/icefields/Power-Ampache-2)**; both projects are GPL-3.0 — see [`web/songpit-upload/public/pa2/CREDITS.txt`](web/songpit-upload/public/pa2/CREDITS.txt). The matrix background is drawn through a **small WebGL fragment shader** (scanlines, barrel distortion, vignette, light RGB split) with a plain CSS background if WebGL or the texture fails.
 
 ## Components
 
