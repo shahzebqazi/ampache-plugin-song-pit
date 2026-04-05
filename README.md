@@ -1,27 +1,58 @@
-# Song Pit (`ampache-plugin-song-pit`)
+<!-- Song Pit — README uses artwork from Power Ampache 2 (GPL-3.0); UI theme from PowerAmpache2Theme. -->
 
-Song Pit is a magic-link upload path for music libraries. Someone with a maintainer-issued link opens a time-limited URL, reviews tags and buckets in the browser, and uploads audio only into a staging directory you align with your Ampache upload catalog (or a sync target). The Ampache plugin adds a home-page shortcut for admins and, after song/album/artist searches, a footer link to Song Pit when there are no hits or on the last page of results (optional).
+<p align="center">
+  <img src="web/songpit-upload/public/pa2/pa2-logo-blackbg.png" alt="Power Ampache 2" width="112" height="112" />
+</p>
 
-The upload SPA uses **[PowerAmpache2Theme](https://github.com/icefields/PowerAmpache2Theme)** color tokens (light/dark) and **Nunito** (same family as the Android theme’s typography stack). Branding artwork (`pa2-logo-matrix.jpg`, `pa2-logo-blackbg.png`) comes from **[Power Ampache 2](https://github.com/icefields/Power-Ampache-2)**; both projects are GPL-3.0 — see [`web/songpit-upload/public/pa2/CREDITS.txt`](web/songpit-upload/public/pa2/CREDITS.txt). The matrix background is drawn through a **small WebGL fragment shader** (scanlines, barrel distortion, vignette, light RGB split) with a plain CSS background if WebGL or the texture fails.
+<h1 align="center">Song Pit</h1>
 
-## Components
+<p align="center">
+  <strong>Magic-link uploads for Ampache libraries</strong><br />
+  <sub>Time-limited links · browser tagging · staged drops · <a href="https://github.com/icefields/PowerAmpache2Theme">PowerAmpache2Theme</a>-styled UI</sub>
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-1b6b6b?style=flat-square" alt="AGPL-3.0" /></a>
+  <img src="https://img.shields.io/badge/node-%3E%3D20-70cccc?style=flat-square&logo=node.js&logoColor=122e2e" alt="Node 20+" />
+  <img src="https://img.shields.io/badge/Svelte-5-ff3e00?style=flat-square&logo=svelte&logoColor=white" alt="Svelte 5" />
+</p>
+
+<p align="center">
+  <img src="web/songpit-upload/public/pa2/pa2-logo-matrix.jpg" alt="" width="820" />
+</p>
+
+---
+
+### What it does
+
+Maintainers mint **signed upload tokens**; recipients open a **SPA** in the browser, fix tags and **buckets**, and upload **audio only** into a **staging directory** you point at an [Ampache upload catalog](https://www.ampache.org/docs/help/upload-catalogs) (or a sync target). An **Ampache plugin** adds a home shortcut for admins and an optional **search-footer link** when a catalog search is empty or on the last page of results.
+
+The upload UI uses **[PowerAmpache2Theme](https://github.com/icefields/PowerAmpache2Theme)** color tokens (light/dark) and **Nunito**; artwork is from **[Power Ampache 2](https://github.com/icefields/Power-Ampache-2)** — see [`web/songpit-upload/public/pa2/CREDITS.txt`](web/songpit-upload/public/pa2/CREDITS.txt). The matrix backdrop runs through a small **WebGL CRT-style shader** (scanlines, barrel curve, vignette) with a CSS fallback.
+
+---
+
+### Repository layout
 
 | Path | Role |
 |------|------|
-| [`packages/ampache-song-pit/AmpacheSongPit.php`](packages/ampache-song-pit/AmpacheSongPit.php) | Ampache plugin (copy into `src/Plugin/`). |
-| [`services/songpit-api/`](services/songpit-api/) | Node Fastify API: signed upload tokens, staging writes, static SPA under `/app/`. |
-| [`web/songpit-upload/`](web/songpit-upload/) | Svelte 5 + Vite SPA; `npm run build` writes to `services/songpit-api/web-dist/` (generated — not committed). |
+| [`packages/ampache-song-pit/AmpacheSongPit.php`](packages/ampache-song-pit/AmpacheSongPit.php) | Ampache plugin — copy into `src/Plugin/` (and register in `PluginEnum` if needed). |
+| [`services/songpit-api/`](services/songpit-api/) | **Node** (Fastify): JWT shares, staging writes, static SPA at `/app/`. |
+| [`web/songpit-upload/`](web/songpit-upload/) | **Svelte 5** + Vite; `npm run build` outputs to `services/songpit-api/web-dist/` (generated, not committed). |
 
-## Quick start (companion API)
+---
 
-1. Copy [`services/songpit-api/.env.example`](services/songpit-api/.env.example) to `services/songpit-api/.env` and set:
+### Quick start (companion API)
 
-   - `SONGPIT_JWT_SECRET` — long random string used to sign upload tokens.
-   - `SONGPIT_API_KEY` — secret for `POST /v1/shares` (maintainers only).
-   - `SONGPIT_STAGING_ROOT` — absolute path where drops are written (for example `/var/lib/songpit/staging`). The process must be able to create directories and files here.
-   - `SONGPIT_SPA_PUBLIC_URL` — public base URL of the SPA including `/app`, for example `https://music.example.com/app`.
+1. Copy [`services/songpit-api/.env.example`](services/songpit-api/.env.example) → `services/songpit-api/.env` and set:
 
-2. Build the upload UI (required before `/app/` serves anything; re-run after SPA changes):
+   | Variable | Purpose |
+   |----------|---------|
+   | `SONGPIT_JWT_SECRET` | Secret for signing upload JWTs |
+   | `SONGPIT_API_KEY` | Maintainer key for `POST /v1/shares` |
+   | `SONGPIT_STAGING_ROOT` | Writable absolute path for staged files (e.g. `/var/lib/songpit/staging`) |
+   | `SONGPIT_SPA_PUBLIC_URL` | Public SPA URL including `/app`, e.g. `https://music.example.com/app` |
+
+2. **Build the SPA** (required before `/app/` serves UI; re-run after frontend changes):
 
    ```bash
    cd web/songpit-upload
@@ -29,7 +60,7 @@ The upload SPA uses **[PowerAmpache2Theme](https://github.com/icefields/PowerAmp
    npm run build
    ```
 
-3. Install and start the API:
+3. **Run the API**:
 
    ```bash
    cd services/songpit-api
@@ -37,9 +68,9 @@ The upload SPA uses **[PowerAmpache2Theme](https://github.com/icefields/PowerAmp
    npm start
    ```
 
-   The API creates `services/songpit-api/web-dist/` if needed; until step 2 has produced files there, `/app/` will be empty (health and upload endpoints still work).
+   `web-dist/` is created if missing; until the SPA is built, `/app/` is empty while `/health` and `/v1/*` still work.
 
-4. Create a share (maintainer):
+4. **Create a share** (maintainer):
 
    ```bash
    curl -s -X POST https://your-host/v1/shares \
@@ -48,53 +79,57 @@ The upload SPA uses **[PowerAmpache2Theme](https://github.com/icefields/PowerAmp
      -d '{"maxBytes":500000000,"maxFiles":200,"expiresInHours":24,"password":"optional"}'
    ```
 
-   Use the returned `spaUrl`, or pass `token` in the hash: `/#/?token=...`.
+   Use `spaUrl`, or open `/#/?token=…` with the returned JWT.
 
-5. **API surface**
+---
 
-   - `GET /health` — liveness.
-   - `POST /v1/shares` — Bearer `SONGPIT_API_KEY`; returns a JWT and `spaUrl`.
-   - `GET /v1/session` — Bearer upload JWT; returns limits and usage so far.
-   - `POST /v1/upload` — `multipart/form-data` with `file` (required), optional `password`, and optional fields `title`, `artist`, `album`, `trackNumber`, `bucket`. For MP3, ID3v2 tags are embedded from those fields (`node-id3`). Other extensions are stored as-is; when there is metadata or a bucket, a `.songpit-meta.json` sidecar sits next to the audio file (same basename). `bucket` is sanitized and becomes a subdirectory under the share’s drop folder (default `Inbox`). If the same filename is uploaded twice in one bucket, the API adds `_1`, `_2`, … before the extension instead of overwriting.
+### HTTP API (summary)
 
-Uploads are gated by extension, magic-byte sniffing (including ADTS-style AAC when the file is named `.aac`), per-token byte and file caps, a global rate limit, and a stricter limit on `POST /v1/upload`. Usage totals are updated under an in-process mutex (fine for a single Node worker; use one process or external coordination if you scale horizontally). This does not replace antivirus or legal review — see **Threat model** below.
+| Method | Path | Notes |
+|--------|------|--------|
+| `GET` | `/health` | Liveness |
+| `POST` | `/v1/shares` | Bearer `SONGPIT_API_KEY` — returns JWT + `spaUrl` |
+| `GET` | `/v1/session` | Bearer upload JWT — limits & usage |
+| `POST` | `/v1/upload` | Multipart `file`, optional `password`, `title`, `artist`, `album`, `trackNumber`, `bucket` |
 
-6. **Tests** (API + PHP syntax + SPA typecheck):
+MP3s get **ID3** from those fields; other types may use a **`.songpit-meta.json`** sidecar. `bucket` becomes a sanitized subdirectory (default `Inbox`); duplicate filenames get `_1`, `_2`, …
 
-   ```bash
-   cd services/songpit-api
-   npm test
-   npm run test:php
-   ```
+Uploads are filtered by extension and **magic-byte** sniffing, with per-token caps and rate limits. Usage is tracked in-process (single Node worker is assumed; scale-out needs coordination). This is **not** a substitute for antivirus or legal review — see **Threat model** below.
 
-   ```bash
-   cd web/songpit-upload
-   npm run check
-   ```
+---
 
-   CI runs the API tests, PHP syntax check, `npm run check` on the SPA, and a production build of the upload UI. Integration tests use a small CC0 MP3 in [`services/songpit-api/test/fixtures/cc0/`](services/songpit-api/test/fixtures/cc0/) (Freesound preview surfaced via Openverse; see the README there for attribution). They cover multipart upload, ID3 embedding, `.songpit-meta.json` sidecars, bucket directories, duplicate-safe filenames, and byte counts on disk.
+### Tests & CI
 
-## GitHub Pages (static UI demo)
+```bash
+cd services/songpit-api && npm test && npm run test:php
+cd web/songpit-upload && npm run check
+```
 
-The upload SPA can be published as a **static demo** (tagging UI only; uploads need your API). On push to `main`, [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) builds with `PAGES_BUILD=1`, `VITE_STATIC_DEMO=true`, and a `BASE_PATH` that matches where the site is served.
+CI on `main` / PRs runs API tests, PHP lint, `svelte-check`, and a production SPA build. Integration tests use a small CC0 MP3 under [`services/songpit-api/test/fixtures/cc0/`](services/songpit-api/test/fixtures/cc0/).
 
-1. In the repo **Settings → Pages**, set **Source** to **GitHub Actions** (first-time setup).
-2. After the workflow runs, open the Pages URL and use **Try the static demo** (`#/?demo=1`) to browse the UI without a backend.
+---
 
-**Default URL** (no custom domain): `https://<user>.github.io/<repo>/` — the workflow builds with `BASE_PATH=/<repo>/` and uploads `dist` at the artifact root (GitHub maps that to `.../github.io/<repo>/`).
+### GitHub Pages (static demo)
 
-**Custom domain** (e.g. `https://sqazi.sh/`): GitHub Pages deploys the artifact at the **domain root**. If you want the app at **`https://your-domain/<repo>/`** (for example `https://sqazi.sh/ampache-plugin-song-pit/`), add a repository **variable** **`GITHUB_PAGES_NEST_UNDER_REPO`** with value **`true`**, then re-run the workflow. That nests `dist` under `/<repo>/` in the uploaded site so the path and `BASE_PATH` stay aligned.
+The SPA can be built as a **UI-only** demo (`VITE_STATIC_DEMO=true`). Workflow: [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml).
 
-Optional: set **`GITHUB_PAGES_BASE_PATH`** only if your public path prefix is not `/<repo>/` (must match the folder name you expect under the domain).
+1. **Settings → Pages → Source: GitHub Actions**
+2. After deploy, open the Pages URL and append **`#/?demo=1`** to try the UI without a backend.
 
-To build locally (same as CI default):
+| Hosting | Notes |
+|---------|--------|
+| Default `github.io/<repo>/` | Workflow sets `BASE_PATH=/<repo>/` |
+| Custom domain at **domain root** | Set repo variable `GITHUB_PAGES_NEST_UNDER_REPO=true` if you need the app under `https://domain/<repo>/` |
+| Separate API origin | Build with `VITE_API_BASE_URL` and enable **CORS** on Fastify for your Pages origin |
+
+Local Pages build (matches CI defaults):
 
 ```bash
 cd web/songpit-upload
 BASE_PATH=/ampache-plugin-song-pit/ npm run build:pages
 ```
 
-To mimic the **nested** custom-domain layout locally:
+Nested layout for local preview:
 
 ```bash
 mkdir -p /tmp/songpit-site/ampache-plugin-song-pit
@@ -102,27 +137,20 @@ cp -r dist/. /tmp/songpit-site/ampache-plugin-song-pit/
 npx serve /tmp/songpit-site
 ```
 
-Then open `http://127.0.0.1:3000/ampache-plugin-song-pit/` (port from `serve`).
+---
 
-Serving `dist/` at the repo prefix: `npx serve` does not emulate subpaths from a flat `dist/`; use the nested folder layout above.
+### Ampache
 
-If you host the SPA separately from the API, set **`VITE_API_BASE_URL`** at build time to your API origin (for example `https://music.example.com`) and enable **CORS** on the Fastify service for your Pages origin.
+1. Install [`packages/ampache-song-pit/AmpacheSongPit.php`](packages/ampache-song-pit/AmpacheSongPit.php) — details in [`packages/ampache-song-pit/INSTALL.md`](packages/ampache-song-pit/INSTALL.md).
+2. Enable **Song Pit** and set **Song Pit companion base URL** to the API origin (no trailing path; `/` redirects to `/app/`).
+3. Point `SONGPIT_STAGING_ROOT` at your upload catalog (or synced path).
+4. Run a catalog update after files land.
 
-## Ampache integration
+---
 
-1. Install the plugin as `src/Plugin/AmpacheSongPit.php` (see [`packages/ampache-song-pit/INSTALL.md`](packages/ampache-song-pit/INSTALL.md)).
-2. Enable Song Pit in Ampache and set **Song Pit companion base URL** to the API origin (for example `https://music.example.com` — no trailing path; the plugin links to `/`, which redirects to `/app/`).
-3. Configure an [upload catalog](https://www.ampache.org/docs/help/upload-catalogs) and point `SONGPIT_STAGING_ROOT` at that catalog’s filesystem (or sync into it).
-4. After files land on disk, run a catalog update the way you usually do (web admin or Ampache CLI). Exact steps depend on your Ampache version.
+### Reverse proxy (TLS)
 
-## Reverse proxy (TLS)
-
-Terminate HTTPS at nginx or Caddy and proxy to the Node process:
-
-- Proxy `/`, `/app/`, `/v1/`, `/health` to the same upstream.
-- Avoid exposing `POST /v1/shares` to the open internet without extra network controls if you can help it — the API key in `Authorization` only protects you if the channel is trusted.
-
-Example (nginx sketch):
+Proxy `/`, `/app/`, `/v1/`, `/health` to the Node process. Prefer **not** exposing `POST /v1/shares` broadly without network controls — the API key only helps over a trusted channel.
 
 ```nginx
 location / {
@@ -135,26 +163,25 @@ location / {
 }
 ```
 
-## Threat model
+---
 
-- Treat share URLs and upload JWTs like passwords: anyone with the link can upload within the token’s limits until it expires.
-- Use HTTPS for links and API traffic.
-- Rotate `SONGPIT_API_KEY` when needed. Old tokens cannot be centrally revoked in this milestone (stateless JWTs); issuing shorter-lived shares is the practical mitigation.
-- Plan ClamAV or another scanner on the staging path before you treat that tree as fully trusted.
+### Threat model
 
-## ROADMAP (Milestone 2)
+- Treat share URLs and JWTs like **passwords**.
+- Use **HTTPS** end-to-end.
+- Rotate `SONGPIT_API_KEY` when needed; stateless JWTs are not centrally revocable in this milestone — prefer shorter-lived shares.
+- Scan staging with **ClamAV** (or similar) before treating files as trusted.
 
-**Explicitly out of scope:** no Nextcloud app, no Nextcloud plugin, and no workflow whose goal is to push tracks into Nextcloud. Song Pit stays focused on Ampache plus this companion API.
+---
 
-Planned directions:
+### Roadmap (milestone 2)
 
-- Tagging beyond MP3: optional ffmpeg-based embedding for FLAC/M4A/OGG, or richer non-MP3 tag handling (today: sidecar JSON plus ID3 for `.mp3`).
-- Stronger multi-instance usage accounting (for example SQLite or Redis) if you run multiple Node workers; optional JWT denylist for leaked tokens.
-- Malware and review: ClamAV (or similar) on the staging directory and a human review queue without tying that to Nextcloud — filesystem workflows or a small standalone UI if needed.
-- Agents: OpenClaw + Ollama for maintainer helpers (tag cleanup, import summaries, duplicate hints).
-- Duplicate detection: AcoustID / Chromaprint-style checks against your library via Ampache’s API or DB — not P2P tooling by default.
-- Optional Soulseek CLI only with a clear legal and ops story; not a core dependency.
+**Out of scope:** Nextcloud app/plugin or workflows aimed at pushing into Nextcloud.
 
-## License
+Possible directions: richer tagging (ffmpeg / sidecars), multi-worker usage store or JWT denylist, staging scanners & review queues, maintainer helpers, duplicate detection via AcoustID/Chromaprint, optional Soulseek CLI with a clear legal story.
 
-This project is licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0). That aligns with Ampache’s AGPL licensing when you distribute combined or derivative work; get legal advice if you are unsure how it applies to your deployment.
+---
+
+### License
+
+[GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0). Compatible with Ampache’s copyleft story when distributing combined work; seek legal advice if unsure for your deployment.
