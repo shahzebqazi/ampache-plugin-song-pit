@@ -1,22 +1,73 @@
+/*
+ * Song Pit web UI — colors and type tokens derived from PowerAmpache2Theme
+ * (see https://github.com/icefields/PowerAmpache2Theme, GPL-3.0).
+ */
+
 :root {
-  --md-sys-color-primary: #6750a4;
-  --md-sys-color-on-primary: #ffffff;
-  --md-sys-color-primary-container: #eaddff;
-  --md-sys-color-surface: #fef7ff;
-  --md-sys-color-surface-container: #f3edf7;
-  --md-sys-color-outline: #79747e;
-  --md-sys-color-error: #b3261e;
-  --md-shape-corner-large: 28px;
-  --md-shape-corner-medium: 16px;
-  --md-shape-corner-small: 12px;
+  /* Light scheme (Theme.kt LightColorScheme + colors.xml) */
+  --pa2-primary: #1b6b6b;
+  --pa2-on-primary: #f2ffff;
+  --pa2-primary-container: #9de0e0;
+  --pa2-on-primary-container: #0d2121;
+  --pa2-background: #f2faf7;
+  --pa2-on-background: #1f2124;
+  --pa2-surface: #f2faf7;
+  --pa2-on-surface: #1f2124;
+  --pa2-surface-variant: #dfe5e3;
+  --pa2-on-surface-variant: #4e5359;
+  --pa2-outline: #879099;
+  --pa2-tertiary: #a14300;
+  --pa2-on-tertiary: #faf3ed;
+  --pa2-error: #990127;
+  --pa2-on-error: #fff5f9;
+  --pa2-surface-container: #e9f0ed;
+  --pa2-surface-container-high: #e4ebe8;
+  --pa2-inverse-surface: #333b38;
+  --pa2-inverse-on-surface: #ebf2f0;
+  --pa2-radius-lg: 16px;
+  --pa2-radius-md: 12px;
+  --pa2-radius-pill: 999px;
+  --pa2-shadow: 0 2px 8px rgba(11, 13, 12, 0.08);
+  --pa2-matrix-opacity: 0.18;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* DarkColorScheme (Theme.kt) + colors.xml dark */
+    --pa2-primary: #70cccc;
+    --pa2-on-primary: #122e2e;
+    --pa2-primary-container: #1f4c4c;
+    --pa2-on-primary-container: #9de0e0;
+    --pa2-background: #282e2c;
+    --pa2-on-background: #dfe5e3;
+    --pa2-surface: #1b1f1d;
+    --pa2-on-surface: #dfe5e3;
+    --pa2-surface-variant: #4e5359;
+    --pa2-on-surface-variant: #cbced1;
+    --pa2-outline: #a5a9ad;
+    --pa2-tertiary: #faba82;
+    --pa2-on-tertiary: #421900;
+    --pa2-error: #f593ab;
+    --pa2-on-error: #520417;
+    --pa2-surface-container: #242927;
+    --pa2-surface-container-high: #282e2c;
+    --pa2-inverse-surface: #dfe5e3;
+    --pa2-inverse-on-surface: #333b38;
+    --pa2-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --pa2-matrix-opacity: 0.35;
+  }
+}
+
+:root {
   font-family:
-    'DM Sans',
+    'Nunito',
     system-ui,
     -apple-system,
     sans-serif;
-  color: #1d1b20;
-  background: linear-gradient(165deg, #fef7ff 0%, #e8def8 45%, #fce7f3 100%);
+  color: var(--pa2-on-background);
+  background-color: var(--pa2-background);
   min-height: 100vh;
+  line-height: 1.5;
 }
 
 * {
@@ -28,10 +79,244 @@ body {
 }
 
 a {
-  color: var(--md-sys-color-primary);
+  color: var(--pa2-primary);
+  font-weight: 600;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+code {
+  font-size: 0.9em;
+  background: var(--pa2-surface-container);
+  padding: 0.1em 0.35em;
+  border-radius: 6px;
 }
 
 button {
   font: inherit;
   cursor: pointer;
+}
+
+/* Layout */
+.pa2-shell {
+  position: relative;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+}
+
+/* Background image URL set inline in App.svelte (import.meta.env.BASE_URL). */
+.pa2-matrix-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: var(--pa2-matrix-opacity);
+}
+
+.pa2-shell-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.pa2-hero {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--pa2-radius-lg);
+  background: var(--pa2-surface-container);
+  border: 1px solid color-mix(in srgb, var(--pa2-outline) 35%, transparent);
+  box-shadow: var(--pa2-shadow);
+}
+
+.pa2-brand-mark {
+  width: 72px;
+  height: auto;
+  flex-shrink: 0;
+  border-radius: 12px;
+}
+
+.pa2-hero-text h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--pa2-primary);
+}
+
+.pa2-tagline {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--pa2-on-surface-variant);
+  font-weight: 500;
+}
+
+.pa2-banner-demo {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--pa2-radius-md);
+  background: color-mix(in srgb, var(--pa2-tertiary) 14%, var(--pa2-surface-container));
+  border: 1px solid color-mix(in srgb, var(--pa2-tertiary) 45%, transparent);
+  color: var(--pa2-on-background);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.pa2-banner-demo strong {
+  color: var(--pa2-tertiary);
+}
+
+.pa2-card {
+  background: var(--pa2-surface);
+  border-radius: var(--pa2-radius-lg);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid color-mix(in srgb, var(--pa2-outline) 28%, transparent);
+  box-shadow: var(--pa2-shadow);
+}
+
+.pa2-card.pa2-warn {
+  border-color: color-mix(in srgb, var(--pa2-error) 45%, transparent);
+  background: color-mix(in srgb, var(--pa2-error) 8%, var(--pa2-surface));
+}
+
+.pa2-card h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--pa2-primary);
+}
+
+.pa2-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.pa2-stat .pa2-label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--pa2-on-surface-variant);
+  font-weight: 700;
+}
+
+.pa2-stat strong {
+  font-size: 1.1rem;
+  color: var(--pa2-on-surface);
+}
+
+.pa2-mono {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+
+.pa2-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.pa2-field input {
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--pa2-radius-md);
+  border: 1px solid var(--pa2-outline);
+  background: var(--pa2-surface);
+  color: var(--pa2-on-surface);
+  max-width: 320px;
+}
+
+.pa2-hint {
+  color: var(--pa2-on-surface-variant);
+  font-size: 0.9rem;
+}
+
+.pa2-muted {
+  color: var(--pa2-on-surface-variant);
+}
+
+.pa2-table-wrap {
+  overflow-x: auto;
+  margin-top: 0.75rem;
+}
+
+.pa2-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.pa2-table-wrap th {
+  text-align: left;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pa2-on-surface-variant);
+  padding: 0.35rem;
+  font-weight: 700;
+}
+
+.pa2-table-wrap td {
+  padding: 0.35rem;
+  vertical-align: middle;
+}
+
+.pa2-table-wrap td input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+  border-radius: var(--pa2-radius-md);
+  border: 1px solid var(--pa2-outline);
+  background: var(--pa2-background);
+  color: var(--pa2-on-surface);
+}
+
+.pa2-narrow {
+  max-width: 4rem;
+}
+
+.pa2-btn {
+  border: none;
+  border-radius: var(--pa2-radius-pill);
+  padding: 0.55rem 1.25rem;
+  font-weight: 700;
+}
+
+.pa2-btn-primary {
+  background: var(--pa2-primary);
+  color: var(--pa2-on-primary);
+}
+
+.pa2-btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pa2-btn-ghost {
+  background: transparent;
+  color: var(--pa2-primary);
+}
+
+.pa2-log {
+  margin: 0.75rem 0 0;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+  color: var(--pa2-on-surface-variant);
+}
+
+.pa2-footer {
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--pa2-on-surface-variant);
 }

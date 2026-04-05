@@ -1,0 +1,11 @@
+Visual assets in this folder are copied from the Power Ampache 2 project:
+
+- pa2-logo-matrix.jpg — graphics/pa2-logo-matrix.jpg
+- pa2-logo-blackbg.png — graphics/launcher/pa2-logo-blackbg.png
+
+Source repository: https://github.com/icefields/Power-Ampache-2 (GPL-3.0)
+
+Color palette and typography follow the PowerAmpache2Theme module:
+https://github.com/icefields/PowerAmpache2Theme (GPL-3.0)
+
+Song Pit applies these tokens in CSS for the web upload UI; it is not an official Power Ampache 2 build.
