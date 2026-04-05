@@ -67,6 +67,24 @@ Uploads are gated by extension, magic-byte sniffing (including ADTS-style AAC wh
 
    Integration tests use a small CC0 MP3 in [`services/songpit-api/test/fixtures/cc0/`](services/songpit-api/test/fixtures/cc0/) (Freesound preview surfaced via Openverse; see the README there for attribution). They cover multipart upload, ID3 embedding, `.songpit-meta.json` sidecars, bucket directories, duplicate-safe filenames, and byte counts on disk.
 
+## GitHub Pages (static UI demo)
+
+The upload SPA can be published as a **static demo** (tagging UI only; uploads need your API). On push to `main`, [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) builds with `PAGES_BUILD=1`, `VITE_STATIC_DEMO=true`, and `BASE_PATH=/<repository-name>/`, then deploys to GitHub Pages.
+
+1. In the repo **Settings → Pages**, set **Source** to **GitHub Actions** (first-time setup).
+2. After the workflow runs, open `https://<user>.github.io/<repo>/` and use **Try the static demo** (`#/?demo=1`) to browse the UI without a backend.
+
+To build locally (replace the path if your fork uses a different repo name):
+
+```bash
+cd web/songpit-upload
+BASE_PATH=/ampache-plugin-song-pit/ npm run build:pages
+```
+
+Serving `dist/` locally: `npx serve dist` (or any static server) at the same `BASE_PATH` prefix.
+
+If you host the SPA separately from the API, set **`VITE_API_BASE_URL`** at build time to your API origin (for example `https://music.example.com`) and enable **CORS** on the Fastify service for your Pages origin.
+
 ## Ampache integration
 
 1. Install the plugin as `src/Plugin/AmpacheSongPit.php` (see [`packages/ampache-song-pit/INSTALL.md`](packages/ampache-song-pit/INSTALL.md)).
