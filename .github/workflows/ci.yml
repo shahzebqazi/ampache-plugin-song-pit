@@ -37,5 +37,5 @@ jobs:
           cache: npm
           cache-dependency-path: web/songpit-upload/package-lock.json
 
-      - name: Build SPA (writes to services/songpit-api/web-dist)
-        run: npm ci && npm run build
+      - name: Check and build SPA (writes to services/songpit-api/web-dist)
+        run: npm ci && npm run check && npm run build

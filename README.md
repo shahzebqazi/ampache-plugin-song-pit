@@ -1,6 +1,6 @@
 # Song Pit (`ampache-plugin-song-pit`)
 
-Song Pit is a magic-link upload path for music libraries. Someone with a maintainer-issued link opens a time-limited URL, reviews tags and buckets in the browser, and uploads audio only into a staging directory you align with your Ampache upload catalog (or a sync target). An Ampache plugin adds a home-page shortcut for admins.
+Song Pit is a magic-link upload path for music libraries. Someone with a maintainer-issued link opens a time-limited URL, reviews tags and buckets in the browser, and uploads audio only into a staging directory you align with your Ampache upload catalog (or a sync target). The Ampache plugin adds a home-page shortcut for admins and, after song/album/artist searches, a footer link to Song Pit when there are no hits or on the last page of results (optional).
 
 The UI follows Material You–style cues (rounded surfaces, expressive color), inspired by [Power Ampache 2](https://github.com/icefields/Power-Ampache-2), without reusing third-party assets.
 
@@ -59,7 +59,7 @@ The UI follows Material You–style cues (rounded surfaces, expressive color), i
 
 Uploads are gated by extension, magic-byte sniffing (including ADTS-style AAC when the file is named `.aac`), per-token byte and file caps, a global rate limit, and a stricter limit on `POST /v1/upload`. Usage totals are updated under an in-process mutex (fine for a single Node worker; use one process or external coordination if you scale horizontally). This does not replace antivirus or legal review — see **Threat model** below.
 
-6. **Tests** (API + PHP syntax):
+6. **Tests** (API + PHP syntax + SPA typecheck):
 
    ```bash
    cd services/songpit-api
@@ -67,23 +67,44 @@ Uploads are gated by extension, magic-byte sniffing (including ADTS-style AAC wh
    npm run test:php
    ```
 
-   Integration tests use a small CC0 MP3 in [`services/songpit-api/test/fixtures/cc0/`](services/songpit-api/test/fixtures/cc0/) (Freesound preview surfaced via Openverse; see the README there for attribution). They cover multipart upload, ID3 embedding, `.songpit-meta.json` sidecars, bucket directories, duplicate-safe filenames, and byte counts on disk.
+   ```bash
+   cd web/songpit-upload
+   npm run check
+   ```
+
+   CI runs the API tests, PHP syntax check, `npm run check` on the SPA, and a production build of the upload UI. Integration tests use a small CC0 MP3 in [`services/songpit-api/test/fixtures/cc0/`](services/songpit-api/test/fixtures/cc0/) (Freesound preview surfaced via Openverse; see the README there for attribution). They cover multipart upload, ID3 embedding, `.songpit-meta.json` sidecars, bucket directories, duplicate-safe filenames, and byte counts on disk.
 
 ## GitHub Pages (static UI demo)
 
-The upload SPA can be published as a **static demo** (tagging UI only; uploads need your API). On push to `main`, [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) builds with `PAGES_BUILD=1`, `VITE_STATIC_DEMO=true`, and `BASE_PATH=/<repository-name>/`, then deploys to GitHub Pages.
+The upload SPA can be published as a **static demo** (tagging UI only; uploads need your API). On push to `main`, [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) builds with `PAGES_BUILD=1`, `VITE_STATIC_DEMO=true`, and a `BASE_PATH` that matches where the site is served.
 
 1. In the repo **Settings → Pages**, set **Source** to **GitHub Actions** (first-time setup).
-2. After the workflow runs, open `https://<user>.github.io/<repo>/` and use **Try the static demo** (`#/?demo=1`) to browse the UI without a backend.
+2. After the workflow runs, open the Pages URL and use **Try the static demo** (`#/?demo=1`) to browse the UI without a backend.
 
-To build locally (replace the path if your fork uses a different repo name):
+**Default URL** (no custom domain): `https://<user>.github.io/<repo>/` — the workflow builds with `BASE_PATH=/<repo>/` and uploads `dist` at the artifact root (GitHub maps that to `.../github.io/<repo>/`).
+
+**Custom domain** (e.g. `https://sqazi.sh/`): GitHub Pages deploys the artifact at the **domain root**. If you want the app at **`https://your-domain/<repo>/`** (for example `https://sqazi.sh/ampache-plugin-song-pit/`), add a repository **variable** **`GITHUB_PAGES_NEST_UNDER_REPO`** with value **`true`**, then re-run the workflow. That nests `dist` under `/<repo>/` in the uploaded site so the path and `BASE_PATH` stay aligned.
+
+Optional: set **`GITHUB_PAGES_BASE_PATH`** only if your public path prefix is not `/<repo>/` (must match the folder name you expect under the domain).
+
+To build locally (same as CI default):
 
 ```bash
 cd web/songpit-upload
 BASE_PATH=/ampache-plugin-song-pit/ npm run build:pages
 ```
 
-Serving `dist/` locally: `npx serve dist` (or any static server) at the same `BASE_PATH` prefix.
+To mimic the **nested** custom-domain layout locally:
+
+```bash
+mkdir -p /tmp/songpit-site/ampache-plugin-song-pit
+cp -r dist/. /tmp/songpit-site/ampache-plugin-song-pit/
+npx serve /tmp/songpit-site
+```
+
+Then open `http://127.0.0.1:3000/ampache-plugin-song-pit/` (port from `serve`).
+
+Serving `dist/` at the repo prefix: `npx serve` does not emulate subpaths from a flat `dist/`; use the nested folder layout above.
 
 If you host the SPA separately from the API, set **`VITE_API_BASE_URL`** at build time to your API origin (for example `https://music.example.com`) and enable **CORS** on the Fastify service for your Pages origin.
 
@@ -136,4 +157,4 @@ Planned directions:
 
 ## License
 
-Pick a license when you publish (for example AGPL-3.0 if you need to align with Ampache for linked derivatives — get legal advice for your situation).
+This project is licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0). That aligns with Ampache’s AGPL licensing when you distribute combined or derivative work; get legal advice if you are unsure how it applies to your deployment.

@@ -6,6 +6,7 @@ on:
     paths:
       - 'web/songpit-upload/**'
       - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -31,17 +32,50 @@ jobs:
           cache: npm
           cache-dependency-path: web/songpit-upload/package-lock.json
 
+      # BASE_PATH=/<repo>/ so asset URLs match https://<user>.github.io/<repo>/ (default).
+      # Custom domain: GitHub still deploys the artifact at the domain root. To get
+      # https://example.com/<repo>/ instead of https://example.com/, set repository variable
+      # GITHUB_PAGES_NEST_UNDER_REPO=true — the workflow then uploads dist under /<repo>/.
       - name: Install and build SPA
         working-directory: web/songpit-upload
         env:
           PAGES_BUILD: '1'
           VITE_STATIC_DEMO: 'true'
-          BASE_PATH: /${{ github.event.repository.name }}/
-        run: npm ci && npm run build:pages
+          GITHUB_PAGES_BASE_PATH: ${{ vars.GITHUB_PAGES_BASE_PATH }}
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          if [ -n "$GITHUB_PAGES_BASE_PATH" ]; then
+            export BASE_PATH="$GITHUB_PAGES_BASE_PATH"
+          else
+            export BASE_PATH="/${REPO}/"
+          fi
+          npm ci && npm run build:pages
+
+      - name: Prepare Pages artifact (optional subpath for custom domain)
+        id: pages
+        env:
+          GITHUB_PAGES_BASE_PATH: ${{ vars.GITHUB_PAGES_BASE_PATH }}
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          if [ -n "$GITHUB_PAGES_BASE_PATH" ]; then
+            BASE_PATH="$GITHUB_PAGES_BASE_PATH"
+          else
+            BASE_PATH="/${REPO}/"
+          fi
+          NEST_DIR="$(echo "$BASE_PATH" | sed 's|^/||;s|/$||')"
+          if [ "${{ vars.GITHUB_PAGES_NEST_UNDER_REPO }}" = "true" ]; then
+            rm -rf out
+            mkdir -p "out/${NEST_DIR}"
+            cp -r web/songpit-upload/dist/. "out/${NEST_DIR}/"
+            touch out/.nojekyll
+            echo "artifact_path=out" >> "$GITHUB_OUTPUT"
+          else
+            echo "artifact_path=web/songpit-upload/dist" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: web/songpit-upload/dist
+          path: ${{ steps.pages.outputs.artifact_path }}
 
       - id: deployment
         uses: actions/deploy-pages@v4
