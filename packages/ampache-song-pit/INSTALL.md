@@ -1,14 +1,15 @@
 # Installing Song Pit (Ampache plugin)
 
-1. Copy `AmpacheSongPit.php` into your Ampache tree next to other plugins:
-   - `src/Plugin/AmpacheSongPit.php`
+1. Copy `AmpacheSongPit.php` into your Ampache tree with the other plugins, usually:
 
-2. In Ampache, enable the **Song Pit** plugin (admin → plugins).
+   `src/Plugin/AmpacheSongPit.php`
 
-3. Set **Song Pit companion base URL** to the public URL of your Song Pit API (including scheme), e.g. `https://songpit.example.com`.
+2. In Ampache, open the plugins area (admin → plugins) and enable **Song Pit**.
 
-4. Deploy the companion service from `services/songpit-api/` and the upload SPA from `web/songpit-upload/` (see root `README.md`).
+3. Set **Song Pit companion base URL** to where the Song Pit API is reachable on the web, including `https://`, for example `https://songpit.example.com`.
 
-5. Configure an [Ampache upload catalog](https://www.ampache.org/docs/help/upload-catalogs) and point the companion staging directory at the same filesystem path or sync into it.
+4. Deploy the companion API from `services/songpit-api/` and build the upload UI from `web/songpit-upload/` (see the repo root `README.md` for env vars and build steps).
 
-Ampache version compatibility is declared in `AmpacheSongPit.php` as `min_ampache` / `max_ampache`; adjust after testing on your instance.
+5. Point Ampache at an [upload catalog](https://www.ampache.org/docs/help/upload-catalogs) and make sure the companion’s staging directory matches that catalog on disk (or syncs into it).
+
+`AmpacheSongPit.php` lists `min_ampache` / `max_ampache`; bump those after you have tested on your actual Ampache version.

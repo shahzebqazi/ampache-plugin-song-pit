@@ -1,6 +1,7 @@
 <script lang="ts">
   import { parseBlob } from 'music-metadata';
   import { onMount } from 'svelte';
+  import { apiUrl } from './lib/api';
 
   type Session = {
     sub: string;
@@ -21,31 +22,70 @@
     bucket: string;
   };
 
+  const staticDemo = import.meta.env.VITE_STATIC_DEMO === 'true';
+
+  const DEMO_SESSION: Session = {
+    sub: 'demo-drop',
+    maxBytes: 500 * 1024 * 1024,
+    maxFiles: 200,
+    usedBytes: 0,
+    uploadedFiles: 0,
+    passwordRequired: false,
+  };
+
+  let demoMode = $state(false);
   let token = $state('');
   let session = $state<Session | null>(null);
   let sessionError = $state<string | null>(null);
+  let sessionLoading = $state(false);
   let password = $state('');
   let tracks = $state<TrackRow[]>([]);
   let busy = $state(false);
   let uploadLog = $state<string[]>([]);
 
-  function readTokenFromUrl(): string {
+  function readHashParams(): URLSearchParams {
     const h = window.location.hash.replace(/^#/, '');
-    const q = new URLSearchParams(h.startsWith('?') ? h.slice(1) : h);
-    return q.get('token') ?? '';
+    return new URLSearchParams(h.startsWith('?') ? h.slice(1) : h);
   }
 
-  onMount(() => {
-    token = readTokenFromUrl();
+  function applyRoute() {
+    const params = readHashParams();
+    demoMode = staticDemo && params.get('demo') === '1';
+    token = params.get('token') ?? '';
+
+    if (demoMode) {
+      session = DEMO_SESSION;
+      sessionError = null;
+      sessionLoading = false;
+      return;
+    }
+
+    session = null;
+    sessionError = null;
     if (token) {
       void refreshSession();
+    } else {
+      sessionLoading = false;
     }
+  }
+
+  const showGate = $derived(!demoMode && !token);
+
+  onMount(() => {
+    applyRoute();
+    window.addEventListener('hashchange', applyRoute);
+    return () => window.removeEventListener('hashchange', applyRoute);
   });
 
   async function refreshSession() {
+    if (demoMode) {
+      session = DEMO_SESSION;
+      return;
+    }
     sessionError = null;
+    sessionLoading = true;
     try {
-      const r = await fetch('/v1/session', {
+      const r = await fetch(apiUrl('/v1/session'), {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!r.ok) {
@@ -55,6 +95,8 @@
     } catch (e) {
       session = null;
       sessionError = e instanceof Error ? e.message : 'Session failed';
+    } finally {
+      sessionLoading = false;
     }
   }
 
@@ -77,8 +119,7 @@
         title = c.title ?? title;
         artist = c.artist ?? c.artists?.[0] ?? '';
         album = c.album ?? '';
-        trackNo =
-          c.track.no != null ? String(c.track.no) : c.track.of != null ? String(c.track.of) : '';
+        trackNo = c.track.no != null ? String(c.track.no) : '';
       } catch {
         /* keep filename defaults */
       }
@@ -112,6 +153,10 @@
   const buckets = $derived([...new Set(tracks.map((t) => t.bucket))].sort());
 
   async function uploadAll() {
+    if (demoMode) {
+      uploadLog = ['Static demo: deploy the Song Pit API to upload files.'];
+      return;
+    }
     if (!token || !session) {
       return;
     }
@@ -120,11 +165,16 @@
     for (const t of tracks) {
       const fd = new FormData();
       fd.append('file', t.file, t.file.name);
+      fd.append('title', t.title);
+      fd.append('artist', t.artist);
+      fd.append('album', t.album);
+      fd.append('trackNumber', t.trackNo);
+      fd.append('bucket', t.bucket);
       if (password) {
         fd.append('password', password);
       }
       try {
-        const r = await fetch('/v1/upload', {
+        const r = await fetch(apiUrl('/v1/upload'), {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
           body: fd,
@@ -152,15 +202,27 @@
 </script>
 
 <div class="shell">
+  {#if staticDemo}
+    <div class="banner demo">
+      <strong>Demo</strong> — UI only on GitHub Pages. Uploads require a self-hosted Song Pit API;
+      open a real share link against your deployment for end-to-end uploads.
+    </div>
+  {/if}
+
   <header class="hero">
     <h1>Song Pit</h1>
     <p class="tagline">Sort, tag, then drop tracks into the collection.</p>
   </header>
 
-  {#if !token}
+  {#if showGate}
     <section class="card warn">
       <h2>Missing link</h2>
       <p>Open this app from a valid Song Pit share URL (it includes a token in the hash).</p>
+      {#if staticDemo}
+        <p class="hint">
+          <a href="#/?demo=1">Try the static demo</a> (browse tagging UI locally; uploads stay disabled).
+        </p>
+      {/if}
     </section>
   {:else if sessionError}
     <section class="card warn">
@@ -168,9 +230,9 @@
       <p>{sessionError}</p>
       <button type="button" class="btn primary" onclick={() => refreshSession()}>Retry</button>
     </section>
-  {:else if !session}
+  {:else if token && !session && sessionLoading}
     <p class="muted">Loading…</p>
-  {:else}
+  {:else if session}
     <section class="card stats">
       <div class="stat">
         <span class="label">Room left</span>
@@ -202,15 +264,18 @@
         onchange={onPickFiles}
         disabled={busy}
       />
-      <p class="hint">Tags are read in your browser — nothing is uploaded until you confirm.</p>
+      <p class="hint">
+        Tags are read in your browser. On upload, MP3s get ID3 tags embedded; other formats get a
+        <code>.songpit-meta.json</code> sidecar next to the file. Buckets become subfolders under your drop.
+      </p>
     </section>
 
     {#if tracks.length}
       <section class="card">
         <h2>2. Tidy metadata & buckets</h2>
         <p class="hint">
-          Drag ideas: group by vibe (“Live”, “Remasters”). Buckets are labels only — files keep
-          their names on disk.
+          Buckets become directory names under your share (sanitized). Filenames stay unique if you
+          upload duplicates.
         </p>
         <div class="table-wrap">
           <table>
@@ -302,6 +367,21 @@
 </div>
 
 <style>
+  .banner.demo {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--md-shape-corner-large);
+    background: #e8def8;
+    border: 1px solid rgba(103, 80, 164, 0.35);
+    color: #1d192b;
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .banner.demo strong {
+    color: #4f378b;
+  }
+
   .shell {
     max-width: 960px;
     margin: 0 auto;

@@ -1,25 +1,25 @@
 # Song Pit (`ampache-plugin-song-pit`)
 
-Song Pit is a **magic-link upload pipeline** for music libraries: contributors open a **time-limited URL**, **review and bucket tags in the browser**, then upload **only audio** into a **staging directory** you point at your **Ampache upload catalog** (or a sync path). An **Ampache plugin** adds a maintainer shortcut on the home page when you are an admin.
+Song Pit is a magic-link upload path for music libraries. Someone with a maintainer-issued link opens a time-limited URL, reviews tags and buckets in the browser, and uploads audio only into a staging directory you align with your Ampache upload catalog (or a sync target). An Ampache plugin adds a home-page shortcut for admins.
 
-Design cues follow **Material You** (rounded surfaces, expressive color) inspired by [Power Ampache 2](https://github.com/icefields/Power-Ampache-2) — without copying third-party assets.
+The UI follows Material You–style cues (rounded surfaces, expressive color), inspired by [Power Ampache 2](https://github.com/icefields/Power-Ampache-2), without reusing third-party assets.
 
 ## Components
 
 | Path | Role |
 |------|------|
 | [`packages/ampache-song-pit/AmpacheSongPit.php`](packages/ampache-song-pit/AmpacheSongPit.php) | Ampache plugin (copy into `src/Plugin/`). |
-| [`services/songpit-api/`](services/songpit-api/) | Node **Fastify** API: signed upload tokens, staging writes, static SPA under `/app/`. |
-| [`web/songpit-upload/`](web/songpit-upload/) | **Svelte 5** + Vite SPA; build output goes to `services/songpit-api/web-dist/`. |
+| [`services/songpit-api/`](services/songpit-api/) | Node Fastify API: signed upload tokens, staging writes, static SPA under `/app/`. |
+| [`web/songpit-upload/`](web/songpit-upload/) | Svelte 5 + Vite SPA; build output goes to `services/songpit-api/web-dist/`. |
 
 ## Quick start (companion API)
 
 1. Copy [`services/songpit-api/.env.example`](services/songpit-api/.env.example) to `services/songpit-api/.env` and set:
 
-   - **`SONGPIT_JWT_SECRET`** — long random string (used to sign upload tokens).
-   - **`SONGPIT_API_KEY`** — secret for `POST /v1/shares` (maintainers only).
-   - **`SONGPIT_STAGING_ROOT`** — absolute path where drops are written (e.g. `/var/lib/songpit/staging`). The process must be able to create directories and files here.
-   - **`SONGPIT_SPA_PUBLIC_URL`** — public base URL of the SPA **including `/app`**, e.g. `https://music.example.com/app`.
+   - `SONGPIT_JWT_SECRET` — long random string used to sign upload tokens.
+   - `SONGPIT_API_KEY` — secret for `POST /v1/shares` (maintainers only).
+   - `SONGPIT_STAGING_ROOT` — absolute path where drops are written (for example `/var/lib/songpit/staging`). The process must be able to create directories and files here.
+   - `SONGPIT_SPA_PUBLIC_URL` — public base URL of the SPA including `/app`, for example `https://music.example.com/app`.
 
 2. Install and run:
 
@@ -29,7 +29,7 @@ Design cues follow **Material You** (rounded surfaces, expressive color) inspire
    npm start
    ```
 
-3. Build the SPA (after UI changes):
+3. Build the SPA after UI changes:
 
    ```bash
    cd web/songpit-upload
@@ -37,7 +37,7 @@ Design cues follow **Material You** (rounded surfaces, expressive color) inspire
    npm run build
    ```
 
-4. **Create a share** (maintainer):
+4. Create a share (maintainer):
 
    ```bash
    curl -s -X POST https://your-host/v1/shares \
@@ -46,16 +46,16 @@ Design cues follow **Material You** (rounded surfaces, expressive color) inspire
      -d '{"maxBytes":500000000,"maxFiles":200,"expiresInHours":24,"password":"optional"}'
    ```
 
-   Use the returned **`spaUrl`** (or pass `token` into `/#/?token=...`).
+   Use the returned `spaUrl`, or pass `token` in the hash: `/#/?token=...`.
 
 5. **API surface**
 
    - `GET /health` — liveness.
-   - `POST /v1/shares` — Bearer **`SONGPIT_API_KEY`**; returns JWT + `spaUrl`.
-   - `GET /v1/session` — Bearer **upload JWT**; returns limits and usage.
-   - `POST /v1/upload` — `multipart/form-data` with **`file`** (required), optional **`password`**, and optional metadata fields **`title`**, **`artist`**, **`album`**, **`trackNumber`**, **`bucket`**. **MP3** files get **ID3v2** tags embedded from those fields (via `node-id3`). Other extensions keep raw bytes; a **`.songpit-meta.json` sidecar** (same basename as the audio file) is written when any metadata or bucket is present. **`bucket`** is sanitized and becomes a **subdirectory** under the share’s drop folder (default `Inbox`). Duplicate filenames in the same bucket get `_1`, `_2`, … before the extension (no silent overwrite).
+   - `POST /v1/shares` — Bearer `SONGPIT_API_KEY`; returns a JWT and `spaUrl`.
+   - `GET /v1/session` — Bearer upload JWT; returns limits and usage so far.
+   - `POST /v1/upload` — `multipart/form-data` with `file` (required), optional `password`, and optional fields `title`, `artist`, `album`, `trackNumber`, `bucket`. For MP3, ID3v2 tags are embedded from those fields (`node-id3`). Other extensions are stored as-is; when there is metadata or a bucket, a `.songpit-meta.json` sidecar sits next to the audio file (same basename). `bucket` is sanitized and becomes a subdirectory under the share’s drop folder (default `Inbox`). If the same filename is uploaded twice in one bucket, the API adds `_1`, `_2`, … before the extension instead of overwriting.
 
-Uploads are restricted by **extension**, **magic-byte sniffing** (including ADTS-style **AAC** when the file is named `.aac`), **per-token byte/file caps**, a **global** rate limit, and a **stricter** limit on `POST /v1/upload`. Usage totals are updated under an **in-process mutex** (safe for one Node worker; use a single process or external coordination if you scale horizontally). This is **not** a substitute for antivirus or legal review — see **Threat model** below.
+Uploads are gated by extension, magic-byte sniffing (including ADTS-style AAC when the file is named `.aac`), per-token byte and file caps, a global rate limit, and a stricter limit on `POST /v1/upload`. Usage totals are updated under an in-process mutex (fine for a single Node worker; use one process or external coordination if you scale horizontally). This does not replace antivirus or legal review — see **Threat model** below.
 
 6. **Tests** (API + PHP syntax):
 
@@ -65,19 +65,21 @@ Uploads are restricted by **extension**, **magic-byte sniffing** (including ADTS
    npm run test:php
    ```
 
+   Integration tests use a small CC0 MP3 in [`services/songpit-api/test/fixtures/cc0/`](services/songpit-api/test/fixtures/cc0/) (Freesound preview surfaced via Openverse; see the README there for attribution). They cover multipart upload, ID3 embedding, `.songpit-meta.json` sidecars, bucket directories, duplicate-safe filenames, and byte counts on disk.
+
 ## Ampache integration
 
-1. Install the plugin file into your Ampache tree as **`src/Plugin/AmpacheSongPit.php`** (see [`packages/ampache-song-pit/INSTALL.md`](packages/ampache-song-pit/INSTALL.md)).
-2. Enable **Song Pit** in Ampache and set **Song Pit companion base URL** to the API origin (e.g. `https://music.example.com` — no trailing path required; the plugin links to the root which redirects to `/app/`).
-3. Configure an **[upload catalog](https://www.ampache.org/docs/help/upload-catalogs)** and align **`SONGPIT_STAGING_ROOT`** with that catalog’s filesystem (or use a bind mount / sync so staged files land under the catalog path).
-4. After files appear on disk, run a **catalog update** the way you usually do (web admin **Update catalog**, or Ampache **CLI** on the server). Exact commands depend on your Ampache version; see your installation’s `bin/cli` or docs.
+1. Install the plugin as `src/Plugin/AmpacheSongPit.php` (see [`packages/ampache-song-pit/INSTALL.md`](packages/ampache-song-pit/INSTALL.md)).
+2. Enable Song Pit in Ampache and set **Song Pit companion base URL** to the API origin (for example `https://music.example.com` — no trailing path; the plugin links to `/`, which redirects to `/app/`).
+3. Configure an [upload catalog](https://www.ampache.org/docs/help/upload-catalogs) and point `SONGPIT_STAGING_ROOT` at that catalog’s filesystem (or sync into it).
+4. After files land on disk, run a catalog update the way you usually do (web admin or Ampache CLI). Exact steps depend on your Ampache version.
 
 ## Reverse proxy (TLS)
 
 Terminate HTTPS at nginx or Caddy and proxy to the Node process:
 
 - Proxy `/`, `/app/`, `/v1/`, `/health` to the same upstream.
-- **Do not** expose `POST /v1/shares` without network restrictions or additional auth if possible (API key in `Authorization` only helps if the channel is trusted).
+- Avoid exposing `POST /v1/shares` to the open internet without extra network controls if you can help it — the API key in `Authorization` only protects you if the channel is trusted.
 
 Example (nginx sketch):
 
@@ -94,24 +96,24 @@ location / {
 
 ## Threat model
 
-- Treat **share URLs and upload JWTs like passwords**. Anyone with the link can upload within the token’s limits until expiry.
-- **HTTPS everywhere** for links and API.
-- **Rotate** `SONGPIT_API_KEY` and **revoke** old links by shortening `expiresInHours` on new shares only (tokens are stateless JWTs — there is no server-side revocation list in Milestone 1).
-- Add **ClamAV** (or another AV scanner on the staging path) in a later milestone before promoting staged files to a trusted library path.
+- Treat share URLs and upload JWTs like passwords: anyone with the link can upload within the token’s limits until it expires.
+- Use HTTPS for links and API traffic.
+- Rotate `SONGPIT_API_KEY` when needed. Old tokens cannot be centrally revoked in this milestone (stateless JWTs); issuing shorter-lived shares is the practical mitigation.
+- Plan ClamAV or another scanner on the staging path before you treat that tree as fully trusted.
 
 ## ROADMAP (Milestone 2)
 
-**Out of scope (explicit):** There will be **no Nextcloud app**, **no Nextcloud plugin**, and **no workflow to add or sync tracks to a Nextcloud server**. Song Pit stays centered on **Ampache + the companion API**, not Nextcloud as a destination.
+**Explicitly out of scope:** no Nextcloud app, no Nextcloud plugin, and no workflow whose goal is to push tracks into Nextcloud. Song Pit stays focused on Ampache plus this companion API.
 
-Planned work:
+Planned directions:
 
-- **Tagging beyond MP3**: Optional **ffmpeg**-based embedding for FLAC/M4A/OGG, or richer **non-MP3** tag libraries (today: sidecar JSON + ID3 for `.mp3`).
-- **Robustness**: **Multi-instance** usage accounting (e.g. SQLite/Redis) if you run **multiple Node workers**; optional **JWT denylist** for leaked tokens.
-- **Malware / review**: **ClamAV** (or similar) integration on the staging directory and a **human review queue** concept — implemented **without** Nextcloud; e.g. filesystem + maintainer tooling or a small standalone queue UI if needed.
-- **Agents**: **OpenClaw** + **Ollama** for maintainer workflows (tag cleanup suggestions, import summaries, duplicate hints).
-- **Duplicate detection**: **AcoustID / Chromaprint**-style fingerprints against your Ampache library via API/DB — **not** P2P tooling by default.
-- Optional **Soulseek CLI** only with an explicit legal/ops story; not shipped as a core dependency.
+- Tagging beyond MP3: optional ffmpeg-based embedding for FLAC/M4A/OGG, or richer non-MP3 tag handling (today: sidecar JSON plus ID3 for `.mp3`).
+- Stronger multi-instance usage accounting (for example SQLite or Redis) if you run multiple Node workers; optional JWT denylist for leaked tokens.
+- Malware and review: ClamAV (or similar) on the staging directory and a human review queue without tying that to Nextcloud — filesystem workflows or a small standalone UI if needed.
+- Agents: OpenClaw + Ollama for maintainer helpers (tag cleanup, import summaries, duplicate hints).
+- Duplicate detection: AcoustID / Chromaprint-style checks against your library via Ampache’s API or DB — not P2P tooling by default.
+- Optional Soulseek CLI only with a clear legal and ops story; not a core dependency.
 
 ## License
 
-Specify your license when publishing (e.g. AGPL-3.0 to align with Ampache if you distribute linked derivatives — consult a lawyer for your scenario).
+Pick a license when you publish (for example AGPL-3.0 if you need to align with Ampache for linked derivatives — get legal advice for your situation).

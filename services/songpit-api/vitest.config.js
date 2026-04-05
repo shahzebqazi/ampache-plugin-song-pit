@@ -7,6 +7,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   test: {
     environment: 'node',
+    /** Integration tests share `test-staging/` and usage state; run files sequentially. */
+    fileParallelism: false,
     include: ['test/**/*.test.js'],
     env: {
       SONGPIT_JWT_SECRET: 'test-secret-key-32-bytes-minimum!!',

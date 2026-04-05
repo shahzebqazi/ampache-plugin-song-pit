@@ -5,11 +5,26 @@ import { dirname, resolve } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+const pagesBuild = process.env.PAGES_BUILD === '1';
+const base = pagesBuild
+  ? (() => {
+      const b = process.env.BASE_PATH;
+      if (!b || !b.trim()) {
+        throw new Error(
+          'PAGES_BUILD=1 requires BASE_PATH (e.g. /my-repo/ for a GitHub Pages project site)'
+        );
+      }
+      return b.replace(/\/?$/, '/');
+    })()
+  : '/app/';
+
 export default defineConfig({
   plugins: [svelte()],
-  base: '/app/',
+  base,
   build: {
-    outDir: resolve(__dirname, '../../services/songpit-api/web-dist'),
+    outDir: pagesBuild
+      ? resolve(__dirname, 'dist')
+      : resolve(__dirname, '../../services/songpit-api/web-dist'),
     emptyOutDir: true,
   },
   server: {
