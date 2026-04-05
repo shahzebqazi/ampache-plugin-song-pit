@@ -1,9 +1,5 @@
 <!-- Song Pit — README uses artwork from Power Ampache 2 (GPL-3.0); UI theme from PowerAmpache2Theme. -->
 
-<p align="center">
-  <img src="web/songpit-upload/public/pa2/pa2-logo-blackbg.png" alt="Power Ampache 2" width="112" height="112" />
-</p>
-
 <h1 align="center">Song Pit</h1>
 
 <p align="center">
@@ -15,10 +11,6 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-1b6b6b?style=flat-square" alt="AGPL-3.0" /></a>
   <img src="https://img.shields.io/badge/node-%3E%3D20-70cccc?style=flat-square&logo=node.js&logoColor=122e2e" alt="Node 20+" />
   <img src="https://img.shields.io/badge/Svelte-5-ff3e00?style=flat-square&logo=svelte&logoColor=white" alt="Svelte 5" />
-</p>
-
-<p align="center">
-  <img src="web/songpit-upload/public/pa2/pa2-logo-matrix.jpg" alt="" width="820" />
 </p>
 
 ---
