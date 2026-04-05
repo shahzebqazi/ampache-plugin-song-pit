@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ override: false });
 
 const required = (name) => {
   const v = process.env[name];

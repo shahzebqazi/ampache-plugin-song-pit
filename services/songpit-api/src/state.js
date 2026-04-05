@@ -1,45 +1,53 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { Mutex } from 'async-mutex';
 import { config } from './config.js';
 
-const statePath = () => join(config.stagingRoot, '.songpit-usage.json');
+const stateFile = () => join(config.stagingRoot, '.songpit-usage.json');
 
-/** @typedef {{ bytes: number, files: number }} Usage */
+/** Serializes read–modify–write for usage.json within one Node process. */
+const usageMutex = new Mutex();
 
-/** @type {Map<string, Usage>} */
-let cache = new Map();
-
-export async function loadState() {
+/**
+ * Read usage map from disk (may be slightly stale for GET /session).
+ */
+export async function readUsageState() {
   try {
-    const raw = await readFile(statePath(), 'utf8');
+    const raw = await readFile(stateFile(), 'utf8');
     const obj = JSON.parse(raw);
-    cache = new Map(Object.entries(obj));
+    return typeof obj === 'object' && obj !== null && !Array.isArray(obj)
+      ? obj
+      : {};
   } catch {
-    cache = new Map();
+    return {};
   }
 }
 
-async function persist() {
-  await mkdir(dirname(statePath()), { recursive: true });
-  const obj = Object.fromEntries(cache);
-  await writeFile(statePath(), JSON.stringify(obj, null, 2), 'utf8');
+/**
+ * @param {Record<string, { bytes: number, files: number }>} state
+ */
+export async function writeUsageState(state) {
+  await mkdir(config.stagingRoot, { recursive: true });
+  await writeFile(stateFile(), JSON.stringify(state, null, 2), 'utf8');
+}
+
+/**
+ * Serialize usage mutations (parallel uploads in one worker).
+ * @template T
+ * @param {() => Promise<T>} fn
+ */
+export async function withUsageLock(fn) {
+  return usageMutex.runExclusive(async () => {
+    await mkdir(config.stagingRoot, { recursive: true });
+    return fn();
+  });
 }
 
 /**
  * @param {string} sub
  */
-export function getUsage(sub) {
-  return cache.get(sub) ?? { bytes: 0, files: 0 };
-}
-
-/**
- * @param {string} sub
- * @param {number} addBytes
- */
-export async function addUsage(sub, addBytes) {
-  const u = getUsage(sub);
-  u.bytes += addBytes;
-  u.files += 1;
-  cache.set(sub, u);
-  await persist();
+export async function getUsageSnapshot(sub) {
+  const state = await readUsageState();
+  const u = state[sub];
+  return u ?? { bytes: 0, files: 0 };
 }

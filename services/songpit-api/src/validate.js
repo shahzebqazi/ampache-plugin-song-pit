@@ -11,12 +11,12 @@ const ALLOWED_EXT = new Set([
 ]);
 
 const MAGIC = [
-  { mime: 'audio/mpeg', bytes: [0xff, 0xfb] },
-  { mime: 'audio/mpeg', bytes: [0xff, 0xfa] },
-  { mime: 'audio/mpeg', bytes: [0x49, 0x44, 0x33] }, // ID3
-  { mime: 'audio/flac', bytes: [0x66, 0x4c, 0x61, 0x43] }, // fLaC
-  { mime: 'audio/mp4', bytes: [0, 0, 0, 0x20, 0x66, 0x74, 0x79, 0x70] }, // ftyp (loose)
-  { mime: 'audio/ogg', bytes: [0x4f, 0x67, 0x67, 0x53] }, // OggS
+  { bytes: [0xff, 0xfb] },
+  { bytes: [0xff, 0xfa] },
+  { bytes: [0x49, 0x44, 0x33] }, // ID3
+  { bytes: [0x66, 0x4c, 0x61, 0x43] }, // fLaC
+  { bytes: [0, 0, 0, 0x20, 0x66, 0x74, 0x79, 0x70] }, // loose ftyp
+  { bytes: [0x4f, 0x67, 0x67, 0x53] }, // OggS
 ];
 
 /**
@@ -34,8 +34,9 @@ export function extOk(name) {
 /**
  * Best-effort magic sniff; extension still required.
  * @param {Buffer} buf
+ * @param {string} [extHint] lower-case extension e.g. '.aac'
  */
-export function sniffAudio(buf) {
+export function sniffAudio(buf, extHint = '') {
   if (buf.length < 12) {
     return false;
   }
@@ -73,6 +74,15 @@ export function sniffAudio(buf) {
     buf[9] === 0x41 &&
     buf[10] === 0x56 &&
     buf[11] === 0x45
+  ) {
+    return true;
+  }
+  // ADTS AAC (.aac): 12-bit sync 0xFFF, layer ID 0 (MPEG-4)
+  if (
+    extHint === '.aac' &&
+    buf[0] === 0xff &&
+    (buf[1] & 0xf0) === 0xf0 &&
+    (buf[1] & 0x06) === 0
   ) {
     return true;
   }

@@ -53,9 +53,17 @@ Design cues follow **Material You** (rounded surfaces, expressive color) inspire
    - `GET /health` — liveness.
    - `POST /v1/shares` — Bearer **`SONGPIT_API_KEY`**; returns JWT + `spaUrl`.
    - `GET /v1/session` — Bearer **upload JWT**; returns limits and usage.
-   - `POST /v1/upload` — `multipart/form-data` with a **`file`** part; optional **`password`** field if the share was created with a password.
+   - `POST /v1/upload` — `multipart/form-data` with **`file`** (required), optional **`password`**, and optional metadata fields **`title`**, **`artist`**, **`album`**, **`trackNumber`**, **`bucket`**. **MP3** files get **ID3v2** tags embedded from those fields (via `node-id3`). Other extensions keep raw bytes; a **`.songpit-meta.json` sidecar** (same basename as the audio file) is written when any metadata or bucket is present. **`bucket`** is sanitized and becomes a **subdirectory** under the share’s drop folder (default `Inbox`). Duplicate filenames in the same bucket get `_1`, `_2`, … before the extension (no silent overwrite).
 
-Uploads are restricted by **extension**, **naive audio magic-byte sniffing**, **per-token byte/file caps**, and **global rate limiting**. This is **not** a substitute for antivirus or legal review — see **Threat model** below.
+Uploads are restricted by **extension**, **magic-byte sniffing** (including ADTS-style **AAC** when the file is named `.aac`), **per-token byte/file caps**, a **global** rate limit, and a **stricter** limit on `POST /v1/upload`. Usage totals are updated under an **in-process mutex** (safe for one Node worker; use a single process or external coordination if you scale horizontally). This is **not** a substitute for antivirus or legal review — see **Threat model** below.
+
+6. **Tests** (API + PHP syntax):
+
+   ```bash
+   cd services/songpit-api
+   npm test
+   npm run test:php
+   ```
 
 ## Ampache integration
 
@@ -89,13 +97,19 @@ location / {
 - Treat **share URLs and upload JWTs like passwords**. Anyone with the link can upload within the token’s limits until expiry.
 - **HTTPS everywhere** for links and API.
 - **Rotate** `SONGPIT_API_KEY` and **revoke** old links by shortening `expiresInHours` on new shares only (tokens are stateless JWTs — there is no server-side revocation list in Milestone 1).
-- Add **ClamAV** or **Nextcloud Antivirus** (Milestone 2) before promoting staged files to a trusted library path.
+- Add **ClamAV** (or another AV scanner on the staging path) in a later milestone before promoting staged files to a trusted library path.
 
 ## ROADMAP (Milestone 2)
 
-- **Nextcloud app**: quarantine folder, optional Antivirus app integration, human approval queue, then sync into an Ampache-backed path.
-- **Agents**: **OpenClaw** + **Ollama** for maintainer workflows (tag cleanup suggestions, import summaries).
-- **Duplicate detection**: **AcoustID / Chromaprint**-style fingerprints and comparisons against your Ampache library via API/DB — **not** P2P tooling by default.
+**Out of scope (explicit):** There will be **no Nextcloud app**, **no Nextcloud plugin**, and **no workflow to add or sync tracks to a Nextcloud server**. Song Pit stays centered on **Ampache + the companion API**, not Nextcloud as a destination.
+
+Planned work:
+
+- **Tagging beyond MP3**: Optional **ffmpeg**-based embedding for FLAC/M4A/OGG, or richer **non-MP3** tag libraries (today: sidecar JSON + ID3 for `.mp3`).
+- **Robustness**: **Multi-instance** usage accounting (e.g. SQLite/Redis) if you run **multiple Node workers**; optional **JWT denylist** for leaked tokens.
+- **Malware / review**: **ClamAV** (or similar) integration on the staging directory and a **human review queue** concept — implemented **without** Nextcloud; e.g. filesystem + maintainer tooling or a small standalone queue UI if needed.
+- **Agents**: **OpenClaw** + **Ollama** for maintainer workflows (tag cleanup suggestions, import summaries, duplicate hints).
+- **Duplicate detection**: **AcoustID / Chromaprint**-style fingerprints against your Ampache library via API/DB — **not** P2P tooling by default.
 - Optional **Soulseek CLI** only with an explicit legal/ops story; not shipped as a core dependency.
 
 ## License

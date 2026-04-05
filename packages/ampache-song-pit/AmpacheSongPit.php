@@ -94,7 +94,8 @@ class AmpacheSongPit extends AmpachePlugin implements PluginDisplayHomeInterface
         }
 
         Ui::show_box_top(T_('Song Pit'));
-        echo '<div class="songpit-home">';
+        $orderAttr = ($this->order > 0) ? ' style="order: ' . (int) $this->order . ';"' : '';
+        echo '<div class="songpit-home"' . $orderAttr . '>';
         if ($this->companion_url === '') {
             echo '<p class="information">' . T_('Set the Song Pit companion base URL in plugin preferences.') . '</p>';
         } else {
