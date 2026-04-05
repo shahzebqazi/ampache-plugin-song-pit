@@ -44,9 +44,14 @@
   let busy = $state(false);
   let uploadLog = $state<string[]>([]);
 
+  /** Hash may be `#/?demo=1` or `#?demo=1` — `new URLSearchParams('/?demo=1')` wrongly maps `/?demo`→`1`, so strip to the query segment first. */
   function readHashParams(): URLSearchParams {
     const h = window.location.hash.replace(/^#/, '');
-    return new URLSearchParams(h.startsWith('?') ? h.slice(1) : h);
+    if (h.includes('?')) {
+      return new URLSearchParams(h.slice(h.indexOf('?') + 1));
+    }
+    const tail = h.startsWith('/') ? h.slice(1) : h;
+    return new URLSearchParams(tail);
   }
 
   function applyRoute() {
