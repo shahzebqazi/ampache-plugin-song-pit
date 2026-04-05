@@ -10,7 +10,7 @@ The UI follows Material You–style cues (rounded surfaces, expressive color), i
 |------|------|
 | [`packages/ampache-song-pit/AmpacheSongPit.php`](packages/ampache-song-pit/AmpacheSongPit.php) | Ampache plugin (copy into `src/Plugin/`). |
 | [`services/songpit-api/`](services/songpit-api/) | Node Fastify API: signed upload tokens, staging writes, static SPA under `/app/`. |
-| [`web/songpit-upload/`](web/songpit-upload/) | Svelte 5 + Vite SPA; build output goes to `services/songpit-api/web-dist/`. |
+| [`web/songpit-upload/`](web/songpit-upload/) | Svelte 5 + Vite SPA; `npm run build` writes to `services/songpit-api/web-dist/` (generated — not committed). |
 
 ## Quick start (companion API)
 
@@ -21,7 +21,15 @@ The UI follows Material You–style cues (rounded surfaces, expressive color), i
    - `SONGPIT_STAGING_ROOT` — absolute path where drops are written (for example `/var/lib/songpit/staging`). The process must be able to create directories and files here.
    - `SONGPIT_SPA_PUBLIC_URL` — public base URL of the SPA including `/app`, for example `https://music.example.com/app`.
 
-2. Install and run:
+2. Build the upload UI (required before `/app/` serves anything; re-run after SPA changes):
+
+   ```bash
+   cd web/songpit-upload
+   npm install
+   npm run build
+   ```
+
+3. Install and start the API:
 
    ```bash
    cd services/songpit-api
@@ -29,13 +37,7 @@ The UI follows Material You–style cues (rounded surfaces, expressive color), i
    npm start
    ```
 
-3. Build the SPA after UI changes:
-
-   ```bash
-   cd web/songpit-upload
-   npm install
-   npm run build
-   ```
+   The API creates `services/songpit-api/web-dist/` if needed; until step 2 has produced files there, `/app/` will be empty (health and upload endpoints still work).
 
 4. Create a share (maintainer):
 

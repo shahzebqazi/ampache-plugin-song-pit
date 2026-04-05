@@ -22,3 +22,20 @@ jobs:
 
       - name: Install and test
         run: npm ci && npm test && npm run test:php
+
+  songpit-upload:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web/songpit-upload
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/songpit-upload/package-lock.json
+
+      - name: Build SPA (writes to services/songpit-api/web-dist)
+        run: npm ci && npm run build

@@ -60,6 +60,7 @@ export async function buildApp(opts = {}) {
   });
 
   const staticRoot = resolve(__dirname, '../web-dist');
+  await mkdir(staticRoot, { recursive: true });
   await fastify.register(fastifyStatic, {
     root: staticRoot,
     prefix: '/app/',

@@ -12,6 +12,7 @@ npm-debug.log*
 coverage/
 .songpit-data/
 services/songpit-api/data/
+services/songpit-api/web-dist/
 services/songpit-api/test-staging/
 *.sqlite
 vendor/
